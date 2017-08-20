@@ -12,6 +12,7 @@ trait Proofs { self: Theory =>
   sealed abstract class Proof
   case class Var(id: MetaIdentifier) extends Proof
   case class Axiom(theorem: Theorem) extends Proof
+  case class SIHypothesis(ihs: StructuralInductionHypotheses, value: Expr) extends Proof
   case class ImplI(id: MetaIdentifier, hypothesis: Expr, conclusion: Proof) extends Proof
   case class ImplE(implication: Proof, hypothesis: Proof) extends Proof
   case class ForallI(vd: ValDef, body: Proof) extends Proof
@@ -28,6 +29,7 @@ trait Proofs { self: Theory =>
     def go(proof: Proof, bindings: Map[MetaIdentifier, Theorem]): Attempt[Theorem] = proof match {
       case Var(id) => bindings.get(id).map(Attempt.success(_)).getOrElse(Attempt.fail("No such meta variable: " + id))
       case Axiom(theorem) => theorem
+      case SIHypothesis(ihs, value) => ihs.hypothesis(value)
       case ImplI(id, hypothesis, conclusion) => implI(hypothesis) { theorem =>
         go(conclusion, bindings + (id -> theorem))
       }
