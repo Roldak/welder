@@ -372,4 +372,15 @@ trait Theory
       goal.by(theorem)
     }
   }
+  
+  def substituteForalls(expr: Expr, terms: Seq[Expr]): Option[(Map[ValDef, Expr], Expr)] = expr match {
+    case Forall(vds, body) =>
+      val subst = vds.zip(terms).toMap
+      if (vds.size == terms.size) Some(subst, body)
+      else if (vds.size > terms.size) Some(subst, Forall(vds.drop(terms.size), body))
+      else substituteForalls(body, terms.drop(vds.size)).flatMap {
+        case (recSubst, e) => Some(subst ++ recSubst, e)
+      }
+    case _ => None
+  }
 }

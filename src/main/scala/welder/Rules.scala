@@ -310,13 +310,8 @@ trait Rules { self: Theory =>
 
   def forallE(quantified: Theorem)(first: Expr, rest: Expr*): Attempt[Theorem] = forallE(quantified, first +: rest)
 
-  def forallE(quantified: Theorem, terms: Seq[Expr]): Attempt[Theorem] = quantified.expression match {
-    // TODO: Be less strict here. What if less arguments are given than quantified variables?
-    //       What if more are given and `expression` is also a Forall-quantified expression?
-
-    case Forall(defs, expression) if terms.size == defs.size => {
-
-      val substitutions = defs.zip(terms).toMap
+  def forallE(quantified: Theorem, terms: Seq[Expr]): Attempt[Theorem] = substituteForalls(quantified.expression, terms) match {
+    case Some((substitutions, expression)) => {
 
       val typeError = substitutions.exists { case (vd, e) =>
         !symbols.isSubtypeOf(e.getType, vd.getType)
